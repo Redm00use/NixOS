@@ -1,24 +1,16 @@
 { config, pkgs, ... }:
 
 let
-  unstable = import <nixos-unstable> { config = { allowUnfree = true; }; };
+  # Импорт нестабильного канала
+  unstable = import (builtins.fetchTarball {
+    url = "https://github.com/NixOS/nixpkgs/archive/nixos-unstable.tar.gz";
+  }) {
+    config = { allowUnfree = true; };
+  };
 in
 {
   imports = [
     ./hardware-configuration.nix
-  ];
-
-
-  nixpkgs.overlays = [
-    (self: super: {
-      yandex-music = super.yandex-music.overrideAttrs (oldAttrs: {
-        version = "5.42.0"; # Указываем новую версию
-        src = super.fetchurl {
-          url = "https://github.com/cucumber-sp/yandex-music-linux/releases/download/v5.42.0/yandex-music_5.42.0_x64.tar.gz"; # Указываем URL для версии 5.42.0
-          sha256 = "0kzmjdk490c66w586qm4assfkzvq0gq3ihkv23kxp54dlg8mlcby"; # Хэш, полученный через nix-prefetch-url
-        };
-      });
-    })
   ];
 
   # Сервис для Warp VPN
@@ -119,7 +111,6 @@ in
     discord
     wine
     winetricks
-    steam
     vulkan-tools
     lutris
     dxvk
@@ -128,8 +119,10 @@ in
     libva
     libvdpau
     libpulseaudio
-    yandex-music
     dpkg
+    playerctl
+    ark
+    swaylock
   ];
 
   # Включаем Docker
@@ -190,6 +183,7 @@ in
   # Bootloader
   boot.loader.systemd-boot.enable = true;
   boot.loader.efi.canTouchEfiVariables = true;
+  boot.kernelPackages = unstable.linuxPackages_6_12;  # Используем ядро из нестабильного канала
 
   # Сетевая конфигурация
   networking.hostName = "nixos";
